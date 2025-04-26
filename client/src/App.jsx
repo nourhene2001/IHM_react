@@ -1,0 +1,30 @@
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Header from './components/Header.jsx';
+import Home from './pages/Home.jsx';
+import JobList from './pages/JobList.jsx';
+import JobPost from './pages/JobPost.jsx';
+import ProfilePage from './pages/ProfilePage.jsx';
+import LoginPage from './pages/LoginPage.jsx';
+import RegisterPage from './pages/RegisterPage.jsx';
+
+function App() {
+  return (
+    <Router>
+      <div className="min-h-screen bg-gray-100">
+        <Header />
+        <main className="container mx-auto p-4">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/jobs" element={<JobList />} />
+            <Route path="/post-job" element={<JobPost />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/login" element={<LoginPage/>} />
+            <Route path="/register" element={<RegisterPage />} />
+          </Routes>
+        </main>
+      </div>
+    </Router>
+  );
+}
+
+export default App;
