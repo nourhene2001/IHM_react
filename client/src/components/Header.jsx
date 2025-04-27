@@ -20,7 +20,13 @@ function Header() {
           <Link to="/jobs">Jobs</Link>
           {user ? (
             <>
-              {user.role === 'recruiter' && <Link to="/post-job">Post Job</Link>}
+              {/* Only for recruiters */}
+              {user.role === 'recruiter' && (
+                <>
+                  <Link to="/post-job">Post Job</Link>
+                  <Link to="/jobs/my-jobs" className="text-white hover:underline">My Job Applications</Link> 
+                </>
+              )}
               <Link to="/profile">Profile</Link>
               <button onClick={handleLogout} className="bg-red-500 px-3 py-1 rounded">Logout</button>
             </>

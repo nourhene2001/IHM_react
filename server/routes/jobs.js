@@ -78,5 +78,69 @@ router.post('/apply', auth, async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
+router.get('/:jobId/applicants', auth, async (req, res) => {
+    if (req.user.role !== 'recruiter') {
+      return res.status(403).json({ message: 'Only recruiters can view applicants' });
+    }
+  
+    const { jobId } = req.params;
+  
+    try {
+      // 1. Find the job
+      const job = await Job.findByPk(jobId);
+  
+      if (!job) {
+        return res.status(404).json({ message: 'Job not found' });
+      }
+  
+      // 2. Check if the recruiter owns the job
+      if (job.recruiterId !== req.user.id) {
+        return res.status(403).json({ message: 'You are not authorized to view applicants for this job' });
+      }
+  
+      // 3. Get all applications with candidate info
+      const applications = await Application.findAll({
+        where: { jobId },
+        include: [{ model: User, as: 'candidate', attributes: ['id', 'name', 'email'] }],
+      });
+  
+      res.json(applications);
+  
+    } catch (err) {
+      console.error('Error fetching applicants:', err.message, err.stack);
+      res.status(500).json({ message: 'Server error', error: err.message });
+    }
+  });
+  router.get('/my-jobs', auth, async (req, res) => {
+    if (req.user.role !== 'recruiter') {
+      return res.status(403).json({ message: 'Only recruiters can view their jobs' });
+    }
+  
+    try {
+      const jobs = await Job.findAll({
+        where: { recruiterId: req.user.id },
+        include: [
+          {
+            model: Application,
+            as: 'applications',  // Use the correct alias here
+            include: [
+              {
+                model: User,
+                as: 'candidate',  // Assuming 'candidate' is the alias for the associated User model
+                attributes: ['id', 'name', 'email'],
+              }
+            ]
+          }
+        ],
+      });
+  
+      res.json(jobs);
+    } catch (err) {
+      console.error('Error fetching recruiter jobs:', err.message, err.stack);
+      res.status(500).json({ message: 'Server error', error: err.message });
+    }
+  });
+  
+  
 
 module.exports = router;

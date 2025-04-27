@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext.jsx';
 import JobForm from '../components/JobForm.jsx';
 import { Navigate } from 'react-router-dom';
+import '../styles/PostJob.css'; // <-- import CSS
 
 function JobPost() {
   const { user, loading } = useContext(AuthContext);

@@ -6,6 +6,7 @@ import JobPost from './pages/JobPost.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
+import Application from './pages/application.jsx';
 
 function App() {
   return (
@@ -20,6 +21,8 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/login" element={<LoginPage/>} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/jobs/my-jobs" element={< Application />} />
+
           </Routes>
         </main>
       </div>
