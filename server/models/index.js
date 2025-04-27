@@ -18,12 +18,14 @@ const Job = require('./Job')(sequelize);
 const Application = require('./Application')(sequelize);
 
 // Define relationships
-User.hasMany(Job, { foreignKey: 'recruiterId' });
-Job.belongsTo(User, { foreignKey: 'recruiterId' });
+User.hasMany(Job, { foreignKey: 'recruiterId', as: 'jobs' });
+Job.belongsTo(User, { foreignKey: 'recruiterId', as: 'recruiter' });
+User.hasMany(Application, { foreignKey: 'candidateId', as: 'applications' });
+Job.hasMany(Application, { foreignKey: 'jobId', as: 'applications' });
+Application.belongsTo(User, { foreignKey: 'candidateId', as: 'candidate' });
+Application.belongsTo(Job, { foreignKey: 'jobId', as: 'job' });
 
-User.hasMany(Application, { foreignKey: 'candidateId' });
-Job.hasMany(Application, { foreignKey: 'jobId' });
-Application.belongsTo(User, { foreignKey: 'candidateId' });
-Application.belongsTo(Job, { foreignKey: 'jobId' });
-
-module.exports = sequelize;
+module.exports = {
+  sequelize,
+  models: { User, Job, Application },
+};

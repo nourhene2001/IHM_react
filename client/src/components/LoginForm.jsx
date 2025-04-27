@@ -6,7 +6,7 @@ function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const context = useContext(AuthContext);
+  const { login } = useContext(AuthContext); // Fix: Destructure login from context
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -15,7 +15,7 @@ function LoginForm() {
       await login(email, password);
       navigate('/');
     } catch (err) {
-      setError('Login failed');
+      setError(err.response?.data?.message || 'Login failed');
     }
   };
 
@@ -28,7 +28,7 @@ function LoginForm() {
           <input
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)} // Fixed here
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full border p-2 rounded"
             required
           />
@@ -38,7 +38,7 @@ function LoginForm() {
           <input
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)} // Fixed here
+            onChange={(e) => setPassword(e.target.value)}
             className="w-full border p-2 rounded"
             required
           />
@@ -47,7 +47,7 @@ function LoginForm() {
           Login
         </button>
       </form>
-      {error && <p className="text-red-500">{error}</p>} {/* Display error message if any */}
+      {error && <p className="text-red-500">{error}</p>}
     </div>
   );
 }

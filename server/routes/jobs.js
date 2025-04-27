@@ -9,7 +9,13 @@ router.get('/', async (req, res) => {
   const where = {};
   if (title) where.title = { [Op.like]: `%${title}%` };
   if (location) where.location = { [Op.like]: `%${location}%` };
-  if (contract) where.contract = contract;
+  if (contract) {
+    const validContracts = ['full-time', 'part-time', 'contract'];
+    if (!validContracts.includes(contract)) {
+      return res.status(400).json({ message: 'Invalid contract type' });
+    }
+    where.contract = contract;
+  }
 
   try {
     const jobs = await Job.findAll({
@@ -18,7 +24,8 @@ router.get('/', async (req, res) => {
     });
     res.json(jobs);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Error fetching jobs:', err.message, err.stack);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 
@@ -39,7 +46,8 @@ router.post('/', auth, async (req, res) => {
     });
     res.status(201).json(job);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Error posting job:', err.message, err.stack);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 
@@ -66,9 +74,9 @@ router.post('/apply', auth, async (req, res) => {
     });
     res.status(201).json({ message: 'Application submitted' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Error applying to job:', err.message, err.stack);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 
 module.exports = router;
-

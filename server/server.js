@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const sequelize = require('./models');
+const { sequelize } = require('./models'); // Correct import
 const authRoutes = require('./routes/auth');
 const jobRoutes = require('./routes/jobs');
 const userRoutes = require('./routes/users');
@@ -13,19 +13,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Sync database
-sequelize.sync({ force: false }).then(() => {
-  console.log('MySQL database connected');
-}).catch(err => {
-  console.error('Database connection error:', err);
-});
-
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/users', userRoutes);
 
-console.log('authRoutes:', authRoutes);
-console.log('jobRoutes:', jobRoutes);
-console.log('userRoutes:', userRoutes);
+// Sync database and start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+sequelize.sync({ force: false }).then(() => {
+  console.log('MySQL database connected');
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}).catch((err) => {
+  console.error('Database connection error:', err.message, err.stack);
+});
