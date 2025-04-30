@@ -35,12 +35,10 @@ module.exports = (sequelize) => {
         key: 'id',
       },
     },
-    createdAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
+    isApproved: { type: DataTypes.BOOLEAN, defaultValue: false },
+  }, {
+    timestamps: true, // Ensure createdAt and updatedAt are managed by Sequelize
   });
 
   return Job;
 };
-

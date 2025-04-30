@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { Job, User, Application } = require('../models').models;
+const { Job, User, Application, Message, Notification } = require('../models').models;
 const auth = require('../middleware/auth');
 const { Op } = require('sequelize');
 
 router.get('/', async (req, res) => {
   const { title, location, contract } = req.query;
-  const where = {};
+  const where = { isApproved: true };
   if (title) where.title = { [Op.like]: `%${title}%` };
   if (location) where.location = { [Op.like]: `%${location}%` };
   if (contract) {
@@ -51,14 +51,18 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-router.post('/apply', auth, async (req, res) => {
+router.post('/:id/apply', auth, async (req, res) => {
   if (req.user.role !== 'candidate') {
     return res.status(403).json({ message: 'Only candidates can apply' });
   }
 
-  const { jobId } = req.body;
+  const { id: jobId } = req.params;
+  const { cv, motivationLetter, contact, note } = req.body;
+
   try {
-    const job = await Job.findByPk(jobId);
+    const job = await Job.findByPk(jobId, {
+      include: [{ model: User, as: 'recruiter', attributes: ['id', 'name'] }],
+    });
     if (!job) return res.status(404).json({ message: 'Job not found' });
 
     const existingApplication = await Application.findOne({
@@ -68,79 +72,424 @@ router.post('/apply', auth, async (req, res) => {
       return res.status(400).json({ message: 'You have already applied to this job' });
     }
 
+    if (!cv || !motivationLetter || !contact) {
+      return res.status(400).json({ message: 'CV, motivation letter, and contact are required' });
+    }
+
     const application = await Application.create({
       jobId,
       candidateId: req.user.id,
+      cv,
+      motivationLetter,
+      contact,
+      note: note || null,
+      status: 'pending',
+      appliedAt: new Date(),
     });
-    res.status(201).json({ message: 'Application submitted' });
+
+    await Notification.create({
+      recipientId: req.user.id,
+      applicationId: application.id,
+      jobId: job.id,
+      message: `You have successfully applied for ${job.title} at ${job.company}.`,
+    });
+
+    await Notification.create({
+      recipientId: job.recruiter.id,
+      applicationId: application.id,
+      jobId: job.id,
+      message: `A candidate (${req.user.name}) has applied for your job: ${job.title} at ${job.company}.`,
+    });
+
+    res.status(201).json({ message: 'Application submitted successfully', application });
   } catch (err) {
     console.error('Error applying to job:', err.message, err.stack);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
+
 router.get('/:jobId/applicants', auth, async (req, res) => {
-    if (req.user.role !== 'recruiter') {
-      return res.status(403).json({ message: 'Only recruiters can view applicants' });
+  if (req.user.role !== 'recruiter') {
+    return res.status(403).json({ message: 'Only recruiters can view applicants' });
+  }
+
+  const { jobId } = req.params;
+
+  try {
+    const job = await Job.findByPk(jobId);
+    if (!job) {
+      return res.status(404).json({ message: 'Job not found' });
     }
-  
-    const { jobId } = req.params;
-  
-    try {
-      // 1. Find the job
-      const job = await Job.findByPk(jobId);
-  
-      if (!job) {
-        return res.status(404).json({ message: 'Job not found' });
+    if (job.recruiterId !== req.user.id) {
+      return res.status(403).json({ message: 'You are not authorized to view applicants for this job' });
+    }
+    const applications = await Application.findAll({
+      where: { jobId },
+      include: [{ model: User, as: 'candidate', attributes: ['id', 'name', 'email'] }],
+    });
+    res.json(applications);
+  } catch (err) {
+    console.error('Error fetching applicants:', err.message, err.stack);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+router.get('/my-jobs', auth, async (req, res) => {
+  if (req.user.role !== 'recruiter') {
+    return res.status(403).json({ message: 'Only recruiters can view their jobs' });
+  }
+
+  try {
+    const jobs = await Job.findAll({
+      where: { recruiterId: req.user.id },
+      include: [
+        {
+          model: Application,
+          as: 'applications',
+          include: [
+            {
+              model: User,
+              as: 'candidate',
+              attributes: ['id', 'name', 'email'],
+            },
+          ],
+        },
+      ],
+    });
+    res.json(jobs);
+  } catch (err) {
+    console.error('Error fetching recruiter jobs:', err.message, err.stack);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+router.get('/my-applications', auth, async (req, res) => {
+  if (req.user.role !== 'candidate') {
+    return res.status(403).json({ message: 'Only candidates can view their applications' });
+  }
+
+  try {
+    const applications = await Application.findAll({
+      where: { candidateId: req.user.id },
+      include: [
+        {
+          model: Job,
+          as: 'job',
+          attributes: ['id', 'title', 'company', 'location'],
+          include: [
+            {
+              model: User,
+              as: 'recruiter',
+              attributes: ['name', 'id'],
+            },
+          ],
+        },
+      ],
+    });
+    res.json(applications);
+  } catch (err) {
+    console.error('Error fetching candidate applications:', err.message, err.stack);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+router.put('/applications/:id/accept', auth, async (req, res) => {
+  if (req.user.role !== 'recruiter') {
+    return res.status(403).json({ message: 'Access denied' });
+  }
+  try {
+    const application = await Application.findByPk(req.params.id, {
+      include: [
+        { model: Job, as: 'job' },
+        { model: User, as: 'candidate', attributes: ['id', 'name'] },
+      ],
+    });
+    if (!application) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+    if (application.job.recruiterId !== req.user.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    application.status = 'accepted';
+    await application.save();
+
+    await Notification.create({
+      recipientId: application.candidate.id,
+      applicationId: application.id,
+      jobId: application.job.id,
+      message: `Your application for ${application.job.title} at ${application.job.company} has been accepted!`,
+    });
+
+    const updatedApplication = await Application.findByPk(req.params.id, {
+      include: [{ model: User, as: 'candidate', attributes: ['name', 'email'] }],
+    });
+    res.json(updatedApplication);
+  } catch (err) {
+    console.error('Error accepting application:', err.message, err.stack);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+router.put('/applications/:id/reject', auth, async (req, res) => {
+  if (req.user.role !== 'recruiter') {
+    return res.status(403).json({ message: 'Access denied' });
+  }
+  try {
+    const application = await Application.findByPk(req.params.id, {
+      include: [
+        { model: Job, as: 'job' },
+        { model: User, as: 'candidate', attributes: ['id', 'name'] },
+      ],
+    });
+    if (!application) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+    if (application.job.recruiterId !== req.user.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    application.status = 'rejected';
+    await application.save();
+
+    await Notification.create({
+      recipientId: application.candidate.id,
+      applicationId: application.id,
+      jobId: application.job.id,
+      message: `Your application for ${application.job.title} at ${application.job.company} has been rejected.`,
+    });
+
+    const updatedApplication = await Application.findByPk(req.params.id, {
+      include: [{ model: User, as: 'candidate', attributes: ['name', 'email'] }],
+    });
+    res.json(updatedApplication);
+  } catch (err) {
+    console.error('Error rejecting application:', err.message, err.stack);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+router.post('/applications/:id/contact', auth, async (req, res) => {
+  if (req.user.role !== 'recruiter') {
+    return res.status(403).json({ message: 'Access denied' });
+  }
+  try {
+    const application = await Application.findByPk(req.params.id, {
+      include: [
+        { model: Job, as: 'job' },
+        { model: User, as: 'candidate', attributes: ['id', 'name'] },
+      ],
+    });
+    if (!application) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+    if (application.job.recruiterId !== req.user.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    await Notification.create({
+      recipientId: application.candidate.id,
+      applicationId: application.id,
+      jobId: application.job.id,
+      message: `The recruiter for ${application.job.title} at ${application.job.company} has contacted you. Check your messages for more details.`,
+    });
+
+    res.json({ message: `Contacted candidate ${application.candidate.name}` });
+  } catch (err) {
+    console.error('Error contacting candidate:', err.message, err.stack);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+router.post('/applications/:id/message', auth, async (req, res) => {
+  try {
+    const application = await Application.findByPk(req.params.id, {
+      include: [
+        { model: Job, as: 'job' },
+        { model: User, as: 'candidate', attributes: ['id', 'name'] },
+      ],
+    });
+    if (!application) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    let senderId, recipientId, recipientName;
+    if (req.user.role === 'recruiter') {
+      if (application.job.recruiterId !== req.user.id) {
+        return res.status(403).json({ message: 'Access denied' });
       }
-  
-      // 2. Check if the recruiter owns the job
-      if (job.recruiterId !== req.user.id) {
-        return res.status(403).json({ message: 'You are not authorized to view applicants for this job' });
+      senderId = req.user.id;
+      recipientId = application.candidateId;
+      recipientName = application.candidate.name;
+    } else if (req.user.role === 'candidate') {
+      if (application.candidateId !== req.user.id) {
+        return res.status(403).json({ message: 'Access denied' });
       }
-  
-      // 3. Get all applications with candidate info
-      const applications = await Application.findAll({
-        where: { jobId },
-        include: [{ model: User, as: 'candidate', attributes: ['id', 'name', 'email'] }],
-      });
-  
-      res.json(applications);
-  
-    } catch (err) {
-      console.error('Error fetching applicants:', err.message, err.stack);
-      res.status(500).json({ message: 'Server error', error: err.message });
+      senderId = req.user.id;
+      recipientId = application.job.recruiterId;
+      const recruiter = await User.findByPk(recipientId, { attributes: ['name'] });
+      recipientName = recruiter.name;
+    } else {
+      return res.status(403).json({ message: 'Access denied' });
     }
-  });
-  router.get('/my-jobs', auth, async (req, res) => {
-    if (req.user.role !== 'recruiter') {
-      return res.status(403).json({ message: 'Only recruiters can view their jobs' });
+
+    const { content } = req.body;
+    if (!content || typeof content !== 'string' || content.trim().length === 0) {
+      return res.status(400).json({ message: 'Message content is required and must be a non-empty string' });
     }
-  
-    try {
-      const jobs = await Job.findAll({
-        where: { recruiterId: req.user.id },
-        include: [
-          {
-            model: Application,
-            as: 'applications',  // Use the correct alias here
-            include: [
-              {
-                model: User,
-                as: 'candidate',  // Assuming 'candidate' is the alias for the associated User model
-                attributes: ['id', 'name', 'email'],
-              }
-            ]
-          }
-        ],
-      });
-  
-      res.json(jobs);
-    } catch (err) {
-      console.error('Error fetching recruiter jobs:', err.message, err.stack);
-      res.status(500).json({ message: 'Server error', error: err.message });
+    if (content.length > 1000) {
+      return res.status(400).json({ message: 'Message content cannot exceed 1000 characters' });
     }
-  });
-  
-  
+
+    const message = await Message.create({
+      applicationId: req.params.id,
+      senderId,
+      recipientId,
+      content: content.trim(),
+      sentAt: new Date(),
+      isRead: false,
+    });
+
+    await Notification.create({
+      recipientId,
+      applicationId: application.id,
+      jobId: application.job.id,
+      message: `You have received a new message regarding ${application.job.title} at ${application.job.company} from ${req.user.name}.`,
+    });
+
+    const populatedMessage = await Message.findByPk(message.id, {
+      include: [
+        { model: User, as: 'sender', attributes: ['name'] },
+        { model: User, as: 'recipient', attributes: ['name'] },
+      ],
+    });
+
+    res.status(201).json({ message: `Message sent to ${recipientName}`, data: populatedMessage });
+  } catch (err) {
+    console.error('Error sending message:', err.message, err.stack);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+router.get('/applications/:id/messages', auth, async (req, res) => {
+  try {
+    const application = await Application.findByPk(req.params.id, {
+      include: [{ model: Job, as: 'job' }],
+    });
+    if (!application) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    if (req.user.role === 'recruiter' && application.job.recruiterId !== req.user.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    if (req.user.role === 'candidate' && application.candidateId !== req.user.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const messages = await Message.findAll({
+      where: { applicationId: req.params.id },
+      include: [
+        { model: User, as: 'sender', attributes: ['name'] },
+        { model: User, as: 'recipient', attributes: ['name'] },
+      ],
+      order: [['sentAt', 'ASC']],
+    });
+
+    for (const message of messages) {
+      if (message.recipientId === req.user.id && !message.isRead) {
+        message.isRead = true;
+        await message.save();
+      }
+    }
+
+    res.json(messages);
+  } catch (err) {
+    console.error('Error fetching messages:', err.message, err.stack);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+router.delete('/applications/:id', auth, async (req, res) => {
+  if (req.user.role !== 'candidate') {
+    return res.status(403).json({ message: 'Access denied' });
+  }
+  try {
+    const application = await Application.findByPk(req.params.id, {
+      include: [
+        { model: Job, as: 'job', include: [{ model: User, as: 'recruiter', attributes: ['id', 'name'] }] },
+      ],
+    });
+    if (!application) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+    if (application.candidateId !== req.user.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    if (application.status !== 'pending') {
+      return res.status(400).json({ message: 'Cannot withdraw non-pending application' });
+    }
+
+    await application.destroy();
+
+    await Notification.create({
+      recipientId: application.job.recruiter.id,
+      applicationId: application.id,
+      jobId: application.job.id,
+      message: `A candidate (${req.user.name}) has withdrawn their application for ${application.job.title} at ${application.job.company}.`,
+    });
+
+    res.json({ message: 'Application withdrawn' });
+  } catch (err) {
+    console.error('Error withdrawing application:', err.message, err.stack);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+router.get('/notifications', auth, async (req, res) => {
+  try {
+    const notifications = await Notification.findAll({
+      where: { recipientId: req.user.id },
+      include: [
+        { model: Application, as: 'application', attributes: ['id'] },
+        { model: Job, as: 'job', attributes: ['title', 'company'] },
+      ],
+      order: [['createdAt', 'DESC']],
+    });
+    res.json(notifications);
+  } catch (err) {
+    console.error('Error fetching notifications:', err.message, err.stack);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+router.put('/notifications/:id/read', auth, async (req, res) => {
+  try {
+    const notification = await Notification.findByPk(req.params.id);
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
+    if (notification.recipientId !== req.user.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    notification.isRead = true;
+    await notification.save();
+    res.json(notification);
+  } catch (err) {
+    console.error('Error marking notification as read:', err.message, err.stack);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+router.put('/notifications/read-all', auth, async (req, res) => {
+  try {
+    await Notification.update(
+      { isRead: true },
+      { where: { recipientId: req.user.id, isRead: false } }
+    );
+    res.json({ message: 'All notifications marked as read' });
+  } catch (err) {
+    console.error('Error marking all notifications as read:', err.message, err.stack);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
 
 module.exports = router;

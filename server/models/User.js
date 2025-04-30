@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const bcrypt = require('bcryptjs'); // install this if not yet: npm install bcryptjs
+const bcrypt = require('bcryptjs');
 
 module.exports = (sequelize) => {
   const User = sequelize.define('User', {
@@ -7,10 +7,10 @@ module.exports = (sequelize) => {
     name: { type: DataTypes.STRING, allowNull: false },
     email: { type: DataTypes.STRING, allowNull: false, unique: true },
     password: { type: DataTypes.STRING, allowNull: false },
-    role: { type: DataTypes.ENUM('candidate', 'recruiter'), allowNull: false },
-    createdAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
-    updatedAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+    role: { type: DataTypes.ENUM('candidate', 'recruiter', 'admin'), allowNull: false },
+    isBanned: { type: DataTypes.BOOLEAN, defaultValue: false },
   }, {
+    timestamps: true, // Ensure createdAt and updatedAt are managed by Sequelize
     hooks: {
       beforeCreate: async (user) => {
         if (user.password) {

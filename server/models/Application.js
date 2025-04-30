@@ -23,6 +23,25 @@ module.exports = (sequelize) => {
         key: 'id',
       },
     },
+    cv: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    motivationLetter: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    contact: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    note: {
+      type: DataTypes.TEXT,
+    },
+    status: {
+      type: DataTypes.ENUM('pending', 'accepted', 'rejected'),
+      defaultValue: 'pending',
+    },
     appliedAt: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,

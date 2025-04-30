@@ -1,20 +1,10 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { AuthContext } from '../context/AuthContext.jsx';
-import axios from 'axios';
+import ApplyForm from './ApplyForm.jsx';
 
 function JobCard({ job }) {
   const { user } = useContext(AuthContext);
-
-  const handleApply = async () => {
-    try {
-      await axios.post('http://localhost:5000/api/jobs/apply', { jobId: job.id }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      alert('Application submitted!');
-    } catch (err) {
-      alert(err.response.data.message || 'Error applying to job');
-    }
-  };
+  const [showApplyForm, setShowApplyForm] = useState(false);
 
   return (
     <div className="bg-white p-4 rounded shadow mb-4">
@@ -24,11 +14,14 @@ function JobCard({ job }) {
       <p className="mt-2">{job.description}</p>
       {user && user.role === 'candidate' && (
         <button
-          onClick={handleApply}
+          onClick={() => setShowApplyForm(true)}
           className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
         >
           Apply
         </button>
+      )}
+      {showApplyForm && (
+        <ApplyForm jobId={job.id} onClose={() => setShowApplyForm(false)} />
       )}
     </div>
   );

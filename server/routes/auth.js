@@ -26,11 +26,17 @@ router.post('/login', async (req, res) => {
     console.log('User instance:', user); // Debug: Log user instance
     console.log('User prototype:', Object.getPrototypeOf(user)); // Debug: Log prototype
     if (!user) return res.status(400).json({ message: 'Invalid credentials' });
+
+    if (user.isBanned) {
+      return res.status(403).json({ message: 'Access denied: You are banned' });
+    }
+
     if (!user.comparePassword) {
       throw new Error('comparePassword method is missing on user instance');
     }
     const isMatch = await user.comparePassword(password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
+
     const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.json({ token, user: { id: user.id, name: user.name, email, role: user.role } });
   } catch (err) {
