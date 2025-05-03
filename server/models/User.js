@@ -9,8 +9,15 @@ module.exports = (sequelize) => {
     password: { type: DataTypes.STRING, allowNull: false },
     role: { type: DataTypes.ENUM('candidate', 'recruiter', 'admin'), allowNull: false },
     isBanned: { type: DataTypes.BOOLEAN, defaultValue: false },
+    phone: { type: DataTypes.STRING },
+    location: { type: DataTypes.STRING },
+    about: { type: DataTypes.TEXT },
+    website: { type: DataTypes.STRING },
+    company: { type: DataTypes.STRING },
+    position: { type: DataTypes.STRING },
+    avatar: { type: DataTypes.STRING }
   }, {
-    timestamps: true, // Ensure createdAt and updatedAt are managed by Sequelize
+    timestamps: true,
     hooks: {
       beforeCreate: async (user) => {
         if (user.password) {

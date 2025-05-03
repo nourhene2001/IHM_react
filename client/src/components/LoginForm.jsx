@@ -27,7 +27,7 @@ function LoginForm() {
       transition={{ duration: 0.3 }}
       className="card max-w-md mx-auto"
     >
-      <h2>Login</h2>
+      <h2>Login 🔐</h2>
       {error && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -39,6 +39,8 @@ function LoginForm() {
       )}
       <form onSubmit={handleSubmit}>
         <div className="form-group email">
+        <label htmlFor="email" className="form-label">Email 📧</label>
+
           <input
             type="email"
             value={email}
@@ -48,9 +50,10 @@ function LoginForm() {
             required
             id="email"
           />
-          <label htmlFor="email" className="form-label">Email</label>
         </div>
         <div className="form-group password">
+        <label htmlFor="password" className="form-label">Password 🔑</label>
+
           <input
             type="password"
             value={password}
@@ -60,14 +63,13 @@ function LoginForm() {
             required
             id="password"
           />
-          <label htmlFor="password" className="form-label">Password</label>
         </div>
         <button
           type="submit"
           className="btn btn-primary w-full"
           aria-label="Login"
         >
-          Login
+          Login 🔓
         </button>
       </form>
     </motion.div>

@@ -39,9 +39,10 @@ function JobList() {
 
   return (
     <main className="container mx-auto px-4 py-8">
+      <br></br>
       {/* Hero Section */}
       <section className="mb-16" aria-label="Job search introduction">
-        <div className="flex flex-col lg:flex-row gap-12 items-center">
+        <div className="flex flex items lg:flex-row gap-12 items-center">
           {/* Left Side - Text Content */}
           <div className="lg:w-1/2">
             <motion.h1 
@@ -49,7 +50,7 @@ function JobList() {
               animate={{ opacity: 1, y: 0 }}
               className="text-4xl md:text-5xl font-bold mb-6 text-neutral-900 leading-tight"
             >
-              Find Your <span className="text-primary-600">Dream Job</span> Today
+              Find Your <span className="text-primary-600">Dream Job</span> Today <span role="img" aria-label="rocket">🚀</span>
             </motion.h1>
             
             <motion.p 
@@ -59,7 +60,7 @@ function JobList() {
               className="text-xl text-neutral-600 mb-8 leading-relaxed"
             >
               CareerConnect helps you discover the perfect opportunity tailored to your skills and aspirations. 
-              Whether you're starting fresh or taking the next step in your career, we've got you covered.
+              Whether you're starting fresh or taking the next step in your career, we've got you covered. <span role="img" aria-label="handshake">🤝</span>
             </motion.p>
             
             <motion.div
@@ -74,7 +75,7 @@ function JobList() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                   </svg>
                 </div>
-                <p className="text-neutral-700">Browse thousands of opportunities from top companies</p>
+                <p className="text-neutral-700">Browse thousands of opportunities from top companies <span role="img" aria-label="briefcase">💼</span></p>
               </div>
               
               <div className="flex items-start gap-4">
@@ -83,7 +84,7 @@ function JobList() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                   </svg>
                 </div>
-                <p className="text-neutral-700">Get matched with roles that fit your skills and experience</p>
+                <p className="text-neutral-700">Get matched with roles that fit your skills and experience <span role="img" aria-label="lightbulb">💡</span></p>
               </div>
               
               <div className="flex items-start gap-4">
@@ -92,7 +93,7 @@ function JobList() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                   </svg>
                 </div>
-                <p className="text-neutral-700">Apply directly or save jobs for later</p>
+                <p className="text-neutral-700">Apply directly or save jobs for later <span role="img" aria-label="bookmark">🔖</span></p>
               </div>
             </motion.div>
           </div>
@@ -105,7 +106,7 @@ function JobList() {
               transition={{ delay: 0.3 }}
               className="card p-6 border border-neutral-100 shadow-lg"
             >
-              <h2 className="text-2xl font-bold text-neutral-800 mb-6">Find Your Perfect Job</h2>
+              <h2 className="text-2xl font-bold text-neutral-800 mb-6">Find Your Perfect Job <span role="img" aria-label="search">🔍</span></h2>
               <JobFilter onFilter={handleFilter} />
             </motion.div>
           </div>
@@ -120,7 +121,7 @@ function JobList() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <p className="mt-4 text-lg text-neutral-600">Loading opportunities...</p>
+            <p className="mt-4 text-lg text-neutral-600">Loading opportunities... <span role="img" aria-label="hourglass">⏳</span></p>
           </div>
         ) : error ? (
           <motion.div
@@ -140,14 +141,14 @@ function JobList() {
                   onClick={() => fetchJobs(filters)}
                   aria-label="Retry fetching jobs"
                 >
-                  Retry
+                  Retry <span role="img" aria-label="refresh">🔄</span>
                 </button>
               </div>
             </div>
           </motion.div>
         ) : jobs.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-xl text-neutral-600">No jobs found. Try adjusting your filters!</p>
+            <p className="text-xl text-neutral-600">No jobs found. Try adjusting your filters! <span role="img" aria-label="question">❓</span></p>
           </div>
         ) : (
           <motion.div

@@ -3,7 +3,7 @@ import axios from 'axios';
 import Messages from '../components/messages.jsx';
 import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFile, faEnvelope, faCircleCheck, faBan } from '@fortawesome/free-solid-svg-icons';
+import { faFile, faEnvelope, faCircleCheck, faBan, faBuilding, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons';
 
 function MyApplications() {
   const [applications, setApplications] = useState([]);
@@ -33,15 +33,27 @@ function MyApplications() {
     if (window.confirm('Are you sure you want to withdraw this application?')) {
       try {
         const token = localStorage.getItem('token');
-        await axios.delete(`http://localhost:5000/api/jobs/applications/${applicationId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setApplications(applications.filter(app => app.id !== applicationId));
-        if (applications.length === 1) {
-          setError(''); // Clear error if last application is withdrawn
+        const response = await axios.delete(
+          `http://localhost:5000/api/jobs/applications/${applicationId}`, 
+          {
+            headers: { 
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        if (response.status === 200) {
+          setApplications(applications.filter(app => app.id !== applicationId));
+          setError('');
         }
       } catch (err) {
-        setError(err.response?.data?.message || 'Error withdrawing application');
+        console.error('Withdrawal error:', err);
+        setError(
+          err.response?.data?.message || 
+          err.message || 
+          'Error withdrawing application'
+        );
       }
     }
   };
@@ -69,10 +81,10 @@ function MyApplications() {
   };
 
   const formatDate = (dateStr) =>
-    new Date(dateStr).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'long',
+    new Date(dateStr).toLocaleDateString('fr-FR', {
       day: 'numeric',
+      month: 'long',
+      year: 'numeric',
     });
 
   return (
@@ -80,9 +92,9 @@ function MyApplications() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="container mx-auto px-4 py-8 bg-gray-50"
+      className="container mx-auto px-4 py-12 bg-gradient-to-b from-gray-50 to-gray-100"
     >
-      <h2 className="text-3xl font-bold mb-8 text-center text-gray-800 cute-heading">My Job Applications</h2>
+      <h2 className="text-4xl font-bold mb-12 text-center text-gray-800 cute-heading">My Job Applications</h2>
 
       {loading ? (
         <div className="text-center py-12">
@@ -90,42 +102,51 @@ function MyApplications() {
           <p className="mt-4 text-gray-600">Loading your applications...</p>
         </div>
       ) : error ? (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded mb-6">
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6">
           {error}
         </div>
       ) : applications.length === 0 ? (
-        <div className="bg-white p-6 rounded-lg shadow text-center">
-          <p className="text-gray-600">You haven't applied to any jobs yet.</p>
+        <div className="bg-white p-8 rounded-lg shadow-lg text-center border border-gray-200">
+          <p className="text-gray-600 text-lg">You haven't applied to any jobs yet.</p>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-10">
           {applications.map((application, index) => (
             <motion.div
               key={application.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
-              className="bg-white p-6 rounded-lg shadow"
+              className="bg-white p-8 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-shadow duration-300"
             >
-              <div className="flex flex-col md:flex-row md:items-center mb-4">
-                <div>
-                  <h3 className="text-xl font-semibold text-teal-600">{application.job.title}</h3>
-                  <p className="text-gray-600">{application.job.company} • {application.job.location}</p>
+              <div className="flex flex-col md:flex-row md:items-center mb-6">
+                <div className="flex-1">
+                  <h3 className="text-2xl font-semibold text-teal-600 mb-2">{application.job.title}</h3>
+                  <div className="flex items-center text-gray-600 space-x-4">
+                    <div className="flex items-center">
+                      <FontAwesomeIcon icon={faBuilding} className="mr-2 text-gray-500" />
+                      <span>{application.job.company}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <FontAwesomeIcon icon={faMapMarkerAlt} className="mr-2 text-gray-500" />
+                      <span>{application.job.location}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="mt-2 md:mt-0 md:ml-4 flex items-center text-sm">
+                <div className="mt-4 md:mt-0 md:ml-4 flex items-center text-sm space-x-2">
                   {getStatusIcon(application.status) && (
                     <FontAwesomeIcon icon={getStatusIcon(application.status)} className={`mr-1 ${getStatusColor(application.status)}`} />
                   )}
-                  <span className={getStatusColor(application.status)}>
+                  <span className={`font-medium ${getStatusColor(application.status)}`}>
                     {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
                   </span>
-                  <span className="text-gray-500 ml-1">• Applied on {formatDate(application.appliedAt)}</span>
+                  <span className="text-gray-500">• Applied on {formatDate(application.appliedAt)}</span>
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center">
-                  <FontAwesomeIcon icon={faFile} className="text-blue-600 mr-2" />
+                  <FontAwesomeIcon icon={faFile} className="text-blue-600 mr-3" />
                   <span className="font-medium text-gray-800">CV:</span>
                   <a href={application.cv} target="_blank" rel="noopener noreferrer" className="ml-2 text-blue-600 hover:underline">
                     View CV
@@ -133,8 +154,8 @@ function MyApplications() {
                 </div>
 
                 <div className="flex items-start">
-                  <FontAwesomeIcon icon={faEnvelope} className="text-blue-600 mr-2 mt-1" />
-                  <div>
+                  <FontAwesomeIcon icon={faEnvelope} className="text-blue-600 mr-3 mt-1" />
+                  <div className="flex-1">
                     <span className="font-medium text-gray-800">Motivation Letter:</span>
                     <button
                       onClick={() => setSelectedLetterIndex(selectedLetterIndex === index ? null : index)}
@@ -143,7 +164,7 @@ function MyApplications() {
                       {selectedLetterIndex === index ? 'Hide' : 'View'}
                     </button>
                     {selectedLetterIndex === index && (
-                      <div className="mt-2 bg-gray-50 p-4 rounded text-sm text-gray-800">
+                      <div className="mt-3 bg-gray-50 p-4 rounded-lg text-sm text-gray-800 border border-gray-200">
                         {application.motivationLetter || 'No letter provided.'}
                       </div>
                     )}
@@ -151,17 +172,17 @@ function MyApplications() {
                 </div>
               </div>
 
-              <div className="mt-6 flex flex-col gap-3 border-t pt-4">
+              <div className="mt-6 flex flex-col gap-3 border-t pt-4 border-gray-200">
                 <button
                   onClick={() => setSelectedApplicationId(selectedApplicationId === application.id ? null : application.id)}
-                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300"
+                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
                 >
                   {selectedApplicationId === application.id ? 'Hide Messages' : 'View Messages'}
                 </button>
                 {application.status === 'pending' && (
                   <button
                     onClick={() => handleWithdraw(application.id)}
-                    className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
+                    className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
                   >
                     Withdraw Application
                   </button>
@@ -169,7 +190,7 @@ function MyApplications() {
               </div>
 
               {selectedApplicationId === application.id && (
-                <div className="mt-4">
+                <div className="mt-6">
                   <Messages
                     applicationId={application.id}
                     userRole="candidate"

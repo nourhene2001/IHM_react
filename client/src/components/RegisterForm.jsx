@@ -66,7 +66,7 @@ function RegisterForm() {
       transition={{ duration: 0.3 }}
       className="card max-w-md mx-auto"
     >
-      <h2>Register</h2>
+      <h2>Register 📋</h2>
       {error && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -78,6 +78,8 @@ function RegisterForm() {
       )}
       <form onSubmit={handleSubmit}>
         <div className="form-group name">
+        <label htmlFor="name" className="form-label">Name 📝</label>
+
           <input
             type="text"
             name="name"
@@ -88,9 +90,10 @@ function RegisterForm() {
             required
             id="name"
           />
-          <label htmlFor="name" className="form-label">Name</label>
         </div>
         <div className="form-group email">
+        <label htmlFor="email" className="form-label">Email 📧</label>
+
           <input
             type="email"
             name="email"
@@ -101,9 +104,10 @@ function RegisterForm() {
             required
             id="email"
           />
-          <label htmlFor="email" className="form-label">Email</label>
         </div>
         <div className="form-group password">
+        <label htmlFor="password" className="form-label">Password 🔑</label>
+
           <input
             type="password"
             name="password"
@@ -114,63 +118,61 @@ function RegisterForm() {
             required
             id="password"
           />
-          <label htmlFor="password" className="form-label">Password</label>
         </div>
         <div className="form-group">
-              <label className="form-label">I am a:</label>
-              <div className="mt-2 space-y-2">
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="candidate"
-                    checked={formData.role === 'candidate'}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 border-neutral-300"
-                  />
-                  <span className="ml-2 text-neutral-700">Job Seeker</span>
-                </label>
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    name="role"
-                    value="recruiter"
-                    checked={formData.role === 'recruiter'}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 border-neutral-300"
-                  />
-                  <span className="ml-2 text-neutral-700">Employer / Recruiter</span>
-                </label>
-              </div>
-            </div>
-          
-       
-        <div className="flex items-center">
-            <input
-              id="terms"
-              name="terms"
-              type="checkbox"
-              required
-              className="h-4 w-4 text-primary-600 border-neutral-300 rounded"
-            />
-            <label htmlFor="terms" className="ml-2 block text-sm text-neutral-700">
-              I agree to the{' '}
-              <a href="#" className="text-primary-600 hover:text-primary-500">
-                Terms and Conditions
-              </a>{' '}
-              and{' '}
-              <a href="#" className="text-primary-600 hover:text-primary-500">
-                Privacy Policy
-              </a>
+          <label className="form-label">I am a: 👤</label>
+          <div className="mt-2 space-y-2">
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                name="role"
+                value="candidate"
+                checked={formData.role === 'candidate'}
+                onChange={handleChange}
+                className="h-4 w-4 text-primary-600 border-neutral-300"
+              />
+              <span className="ml-2 text-neutral-700">Job Seeker 🕵️‍♂️</span>
+            </label>
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                name="role"
+                value="recruiter"
+                checked={formData.role === 'recruiter'}
+                onChange={handleChange}
+                className="h-4 w-4 text-primary-600 border-neutral-300"
+              />
+              
+              <span className="ml-2 text-neutral-700">Employer / Recruiter 💼</span>
             </label>
           </div>
-          
+        </div>
+        <div className="flex items-center">
+          <input
+            id="terms"
+            name="terms"
+            type="checkbox"
+            required
+            className="h-4 w-4 text-primary-600 border-neutral-300 rounded"
+          />
+          <label htmlFor="terms" className="ml-2 block text-sm text-neutral-700">
+            I agree to the{' '}
+            <a href="#" className="text-primary-600 hover:text-primary-500">
+              Terms and Conditions 📑
+            </a>{' '}
+            and{' '}
+            <a href="#" className="text-primary-600 hover:text-primary-500">
+              Privacy Policy 🔒
+            </a>
+          </label>
+        </div>
+        <br></br>
         <button
           type="submit"
           className="btn btn-primary w-full"
           aria-label="Register"
         >
-          Register
+          Register ✍️
         </button>
       </form>
     </motion.div>

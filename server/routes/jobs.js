@@ -4,6 +4,8 @@ const { Job, User, Application, Message, Notification } = require('../models').m
 const auth = require('../middleware/auth');
 const { Op } = require('sequelize');
 
+const multer = require('multer');
+const upload = multer();
 router.get('/', async (req, res) => {
   const { title, location, contract } = req.query;
   const where = { isApproved: true };
@@ -51,13 +53,19 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-router.post('/:id/apply', auth, async (req, res) => {
+// Update the route to use multer middleware
+router.post('/:id/apply', auth, upload.any(), async (req, res) => {
   if (req.user.role !== 'candidate') {
     return res.status(403).json({ message: 'Only candidates can apply' });
   }
 
   const { id: jobId } = req.params;
+  
+  // Extract text fields from req.body
   const { cv, motivationLetter, contact, note } = req.body;
+  
+  // Files will be in req.files
+  const files = req.files || [];
 
   try {
     const job = await Job.findByPk(jobId, {
@@ -71,9 +79,14 @@ router.post('/:id/apply', auth, async (req, res) => {
     if (existingApplication) {
       return res.status(400).json({ message: 'You have already applied to this job' });
     }
-
+    
     if (!cv || !motivationLetter || !contact) {
       return res.status(400).json({ message: 'CV, motivation letter, and contact are required' });
+    }
+
+    const phoneRegex = /^\+?[\d\s-]{10,}$/;
+    if (!phoneRegex.test(contact)) {
+      return res.status(400).json({ message: 'Contact must be a valid phone number (minimum 10 digits, may include +, spaces, or dashes)' });
     }
 
     const application = await Application.create({
@@ -86,6 +99,9 @@ router.post('/:id/apply', auth, async (req, res) => {
       status: 'pending',
       appliedAt: new Date(),
     });
+
+    // Handle file storage if needed (you'll need additional logic here)
+    // ...
 
     await Notification.create({
       recipientId: req.user.id,
@@ -412,20 +428,34 @@ router.delete('/applications/:id', auth, async (req, res) => {
   if (req.user.role !== 'candidate') {
     return res.status(403).json({ message: 'Access denied' });
   }
+  
   try {
     const application = await Application.findByPk(req.params.id, {
       include: [
-        { model: Job, as: 'job', include: [{ model: User, as: 'recruiter', attributes: ['id', 'name'] }] },
+        { 
+          model: Job, 
+          as: 'job', 
+          include: [{ 
+            model: User, 
+            as: 'recruiter', 
+            attributes: ['id', 'name'] 
+          }] 
+        },
       ],
     });
+
     if (!application) {
       return res.status(404).json({ message: 'Application not found' });
     }
+
     if (application.candidateId !== req.user.id) {
       return res.status(403).json({ message: 'Access denied' });
     }
+
     if (application.status !== 'pending') {
-      return res.status(400).json({ message: 'Cannot withdraw non-pending application' });
+      return res.status(400).json({ 
+        message: 'Cannot withdraw non-pending application' 
+      });
     }
 
     await application.destroy();
@@ -439,8 +469,11 @@ router.delete('/applications/:id', auth, async (req, res) => {
 
     res.json({ message: 'Application withdrawn' });
   } catch (err) {
-    console.error('Error withdrawing application:', err.message, err.stack);
-    res.status(500).json({ message: 'Server error', error: err.message });
+    console.error('Error withdrawing application:', err);
+    res.status(500).json({ 
+      message: 'Server error', 
+      error: err.message 
+    });
   }
 });
 
@@ -492,11 +525,6 @@ router.put('/notifications/read-all', auth, async (req, res) => {
   }
 });
 
-/**
- * @route GET /api/jobs/:id
- * @desc Fetch a single job by ID
- * @access Public
- */
 router.get('/:id', async (req, res) => {
   try {
     const job = await Job.findByPk(req.params.id, {
@@ -531,4 +559,5 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
+
 module.exports = router;
