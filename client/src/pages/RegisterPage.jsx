@@ -1,12 +1,17 @@
 import React from 'react';
+import { motion } from 'framer-motion'; // Added for animations
 import RegisterForm from '../components/RegisterForm.jsx';
 
 function RegisterPage() {
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-4 text-center">Register</h2>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="container py-8"
+    >
       <RegisterForm />
-    </div>
+    </motion.div>
   );
 }
 

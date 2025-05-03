@@ -9,62 +9,48 @@ function Header() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout();
-    navigate('/');
+    if (window.confirm('Are you sure you want to log out?')) {
+      logout();
+      navigate('/');
+    }
   };
 
   return (
-    <header className="bg-blue-600 text-white p-4">
-      <nav className="container mx-auto flex justify-between items-center">
-        <Link to="/" className="text-2xl font-bold">
+    <header>
+      <nav className="container" role="navigation" aria-label="Main navigation">
+        <Link to="/" className="header-title">
           CareerConnect
         </Link>
-        <div className="flex items-center space-x-4">
-          <Link to="/jobs" className="hover:underline">
-            Jobs
-          </Link>
+        <div className="btn-group">
+          <Link to="/jobs" className="btn btn-neutral">Jobs</Link>
           {user ? (
             <>
               {user.role === 'recruiter' && (
                 <>
-                  <Link to="/post-job" className="hover:underline">
-                    Post Job
-                  </Link>
-                  <Link to="/jobs/my-jobs" className="hover:underline">
-                    My Posted Jobs
-                  </Link>
+                  <Link to="/post-job" className="btn btn-neutral">Post Job</Link>
+                  <Link to="/jobs/my-jobs" className="btn btn-neutral">My Posted Jobs</Link>
                 </>
               )}
               {user.role === 'candidate' && (
-                <Link to="/jobs/my-applications" className="hover:underline">
-                  My Applications
-                </Link>
+                <Link to="/jobs/my-applications" className="btn btn-neutral">My Applications</Link>
               )}
               {user.role === 'admin' && (
-                <Link to="/admin/dashboard" className="hover:underline">
-                  Admin Dashboard
-                </Link>
+                <Link to="/admin/dashboard" className="btn btn-neutral">Admin Dashboard</Link>
               )}
-              <Link to="/profile" className="hover:underline">
-                Profile
-              </Link>
-              {/* Add Notifications Component */}
+              <Link to="/profile" className="btn btn-neutral">Profile</Link>
               <Notifications />
               <button
+                className="btn btn-secondary"
                 onClick={handleLogout}
-                className="bg-red-500 px-3 py-1 rounded hover:bg-red-600"
+                aria-label="Logout"
               >
                 Logout
               </button>
             </>
           ) : (
             <>
-              <Link to="/login" className="hover:underline">
-                Login
-              </Link>
-              <Link to="/register" className="hover:underline">
-                Register
-              </Link>
+              <Link to="/login" className="btn btn-neutral">Login</Link>
+              <Link to="/register" className="btn btn-neutral">Register</Link>
             </>
           )}
         </div>

@@ -1,12 +1,17 @@
 import React from 'react';
+import { motion } from 'framer-motion'; // Added for animations
 import LoginForm from '../components/LoginForm.jsx';
 
 function LoginPage() {
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-4 text-center">Login</h2>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="container py-8"
+    >
       <LoginForm />
-    </div>
+    </motion.div>
   );
 }
 

@@ -27,6 +27,14 @@ module.exports = (sequelize) => {
       type: DataTypes.ENUM('full-time', 'part-time', 'contract'),
       allowNull: false,
     },
+    requirements: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    salary: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     recruiterId: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -35,9 +43,12 @@ module.exports = (sequelize) => {
         key: 'id',
       },
     },
-    isApproved: { type: DataTypes.BOOLEAN, defaultValue: false },
+    isApproved: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
   }, {
-    timestamps: true, // Ensure createdAt and updatedAt are managed by Sequelize
+    timestamps: true, // Ensures createdAt and updatedAt are managed
   });
 
   return Job;

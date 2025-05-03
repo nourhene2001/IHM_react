@@ -492,4 +492,43 @@ router.put('/notifications/read-all', auth, async (req, res) => {
   }
 });
 
+/**
+ * @route GET /api/jobs/:id
+ * @desc Fetch a single job by ID
+ * @access Public
+ */
+router.get('/:id', async (req, res) => {
+  try {
+    const job = await Job.findByPk(req.params.id, {
+      attributes: [
+        'id',
+        'title',
+        'company',
+        'location',
+        'description',
+        'contract',
+        'requirements',
+        'salary',
+        'createdAt',
+        'isApproved',
+        'recruiterId',
+      ],
+      include: [
+        {
+          model: User,
+          as: 'recruiter',
+          attributes: ['name'],
+          required: false,
+        },
+      ],
+    });
+    if (!job || !job.isApproved) {
+      return res.status(404).json({ message: 'Job not found or not approved' });
+    }
+    res.json(job);
+  } catch (err) {
+    console.error('Error fetching job:', err.message, err.stack);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
 module.exports = router;

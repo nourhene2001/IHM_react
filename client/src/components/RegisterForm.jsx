@@ -1,19 +1,28 @@
 import React, { useState, useContext } from 'react';
+import { motion } from 'framer-motion'; // Added for animations
 import { AuthContext } from '../context/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
 
 function RegisterForm() {
   const authContext = useContext(AuthContext);
-  console.log('AuthContext in RegisterForm:', authContext);
 
   if (authContext === undefined || authContext === null || !authContext.register) {
     console.error('AuthContext is undefined or null. Check AuthProvider setup in index.jsx.');
     return (
-      <div className="bg-white p-6 rounded shadow max-w-md mx-auto">
-        <div className="text-red-500 p-4 border border-red-300 rounded bg-red-50">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="card max-w-md mx-auto"
+      >
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="toast error animate-fadeIn"
+        >
           Authentication service is unavailable. Please check AuthContext setup.
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     );
   }
 
@@ -51,68 +60,120 @@ function RegisterForm() {
   };
 
   return (
-    <div className="bg-white p-6 rounded shadow max-w-md mx-auto">
-      <h2 className="text-2xl font-bold mb-4">Register</h2>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="card max-w-md mx-auto"
+    >
+      <h2>Register</h2>
       {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="toast error animate-fadeIn"
+        >
           {error}
-        </div>
+        </motion.div>
       )}
       <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-gray-700 mb-2">Name</label>
+        <div className="form-group name">
           <input
             type="text"
             name="name"
             value={formData.name}
             onChange={handleChange}
-            className="w-full border p-2 rounded"
+            className="form-input"
+            placeholder=" "
             required
+            id="name"
           />
+          <label htmlFor="name" className="form-label">Name</label>
         </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 mb-2">Email</label>
+        <div className="form-group email">
           <input
             type="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
-            className="w-full border p-2 rounded"
+            className="form-input"
+            placeholder=" "
             required
+            id="email"
           />
+          <label htmlFor="email" className="form-label">Email</label>
         </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 mb-2">Password</label>
+        <div className="form-group password">
           <input
             type="password"
             name="password"
             value={formData.password}
             onChange={handleChange}
-            className="w-full border p-2 rounded"
+            className="form-input"
+            placeholder=" "
             required
+            id="password"
           />
+          <label htmlFor="password" className="form-label">Password</label>
         </div>
-        <div className="mb-4">
-          <label className="block text-gray-700 mb-2">Role</label>
-          <select
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-            required
-          >
-            <option value="candidate">Candidate</option>
-            <option value="recruiter">Recruiter</option>
-          </select>
-        </div>
+        <div className="form-group">
+              <label className="form-label">I am a:</label>
+              <div className="mt-2 space-y-2">
+                <label className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    name="role"
+                    value="candidate"
+                    checked={formData.role === 'candidate'}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-primary-600 border-neutral-300"
+                  />
+                  <span className="ml-2 text-neutral-700">Job Seeker</span>
+                </label>
+                <label className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    name="role"
+                    value="recruiter"
+                    checked={formData.role === 'recruiter'}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-primary-600 border-neutral-300"
+                  />
+                  <span className="ml-2 text-neutral-700">Employer / Recruiter</span>
+                </label>
+              </div>
+            </div>
+          
+       
+        <div className="flex items-center">
+            <input
+              id="terms"
+              name="terms"
+              type="checkbox"
+              required
+              className="h-4 w-4 text-primary-600 border-neutral-300 rounded"
+            />
+            <label htmlFor="terms" className="ml-2 block text-sm text-neutral-700">
+              I agree to the{' '}
+              <a href="#" className="text-primary-600 hover:text-primary-500">
+                Terms and Conditions
+              </a>{' '}
+              and{' '}
+              <a href="#" className="text-primary-600 hover:text-primary-500">
+                Privacy Policy
+              </a>
+            </label>
+          </div>
+          
         <button
           type="submit"
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white p-2 rounded transition"
+          className="btn btn-primary w-full"
+          aria-label="Register"
         >
           Register
         </button>
       </form>
-    </div>
+    </motion.div>
   );
 }
 

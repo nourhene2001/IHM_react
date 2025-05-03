@@ -1,47 +1,92 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 
 function JobFilter({ onFilter }) {
   const [title, setTitle] = useState('');
   const [location, setLocation] = useState('');
   const [contract, setContract] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!title.trim() && !location.trim() && !contract) {
+      setError('Please provide at least one filter criterion');
+      return;
+    }
+    setError('');
     onFilter({ title, location, contract });
+    setSuccess('Filters applied successfully');
+    setTimeout(() => setSuccess(''), 3000);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-4 rounded shadow mb-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <input
-          type="text"
-          placeholder="Job Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="border p-2 rounded"
-        />
-        <input
-          type="text"
-          placeholder="Location"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          className="border p-2 rounded"
-        />
-        <select
-          value={contract}
-          onChange={(e) => setContract(e.target.value)}
-          className="border p-2 rounded"
-        >
-          <option value="">All Contracts</option>
-          <option value="full-time">Full-Time</option>
-          <option value="part-time">Part-Time</option>
-          <option value="contract">Contract</option>
-        </select>
-      </div>
-      <button type="submit" className="mt-4 bg-blue-500 text-white px-4 py-2 rounded">
-        Filter
-      </button>
-    </form>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <form onSubmit={handleSubmit} aria-label="Job search filters">
+        <div className="flex flex-col gap-4">
+          {/* Job Title Field */}
+          <div className="form-group">
+            <input
+              type="text"
+              id="title"
+              className="form-input"
+              placeholder=" "
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+            <label htmlFor="title" className="form-label">Job Title</label>
+          </div>
+          
+          {/* Location Field */}
+          <div className="form-group">
+            <input
+              type="text"
+              id="location"
+              className="form-input"
+              placeholder=" "
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+            />
+            <label htmlFor="location" className="form-label">Location</label>
+          </div>
+          
+          {/* Contract Type Field */}
+          <div className="form-group">
+            <select
+              id="contract"
+              className="form-input"
+              value={contract}
+              onChange={(e) => setContract(e.target.value)}
+            >
+              <option value="">All Contracts</option>
+              <option value="full-time">Full-Time</option>
+              <option value="part-time">Part-Time</option>
+              <option value="contract">Contract</option>
+            </select>
+            <label htmlFor="contract" className="form-label">Contract Type</label>
+          </div>
+          
+          {/* Filter Button */}
+          <button
+            type="submit"
+            className="btn btn-primary"
+            aria-label="Apply filters"
+          >
+            Filter
+          </button>
+        </div>
+        
+        {/* Messages */}
+        <div className="mt-2">
+          {success && <p className="text-success-500 text-sm animate-fadeIn">{success}</p>}
+          {error && <p className="text-error-500 text-sm animate-fadeIn">{error}</p>}
+        </div>
+      </form>
+    </motion.div>
   );
 }
 

@@ -1,4 +1,5 @@
 import React, { useState, useContext } from 'react';
+import { motion } from 'framer-motion'; // Added for animations
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext.jsx';
 
@@ -15,7 +16,7 @@ function Profile() {
       await axios.put('http://localhost:5000/api/users/me', { name, email }, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
-      setSuccess('Profile updated successfully');
+      setSuccess('Profile updated successfully 🌟');
       setError('');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update profile');
@@ -24,36 +25,65 @@ function Profile() {
   };
 
   return (
-    <div className="bg-white p-6 rounded shadow max-w-md mx-auto">
-      <h2 className="text-2xl font-bold mb-4">Profile</h2>
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-      {success && <p className="text-green-500 mb-4">{success}</p>}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="card max-w-md mx-auto"
+    >
+      <h2>Profile</h2>
+      {error && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="toast error animate-fadeIn"
+        >
+          {error}
+        </motion.div>
+      )}
+      {success && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="toast success animate-fadeIn"
+        >
+          {success}
+        </motion.div>
+      )}
       <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-gray-700">Name</label>
+        <div className="form-group name">
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full border p-2 rounded"
+            className="form-input"
+            placeholder=" "
             required
+            id="name"
           />
+          <label htmlFor="name" className="form-label">Name</label>
         </div>
-        <div className="mb-4">
-          <label className="block text-gray-700">Email</label>
+        <div className="form-group email">
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full border p-2 rounded"
+            className="form-input"
+            placeholder=" "
             required
+            id="email"
           />
+          <label htmlFor="email" className="form-label">Email</label>
         </div>
-        <button type="submit" className="w-full bg-blue-500 text-white p-2 rounded">
+        <button
+          type="submit"
+          className="btn btn-primary w-full"
+          aria-label="Update profile"
+        >
           Update Profile
         </button>
       </form>
-    </div>
+    </motion.div>
   );
 }
 
