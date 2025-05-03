@@ -8,30 +8,36 @@ function JobCard({ job }) {
 
   return (
     <motion.div
-      className="card p-6 hover:transform hover:-translate-y-2 transition-all duration-300"
+      className="hover:cursor-pointer"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      whileHover={{ scale: 1.02 }}
-      role="article"
-      aria-labelledby={`job-title-${job.id}`}
     >
-      <h3 id={`job-title-${job.id}`} className="text-xl font-bold mb-3">{job.title}</h3>
-      <p className="text-neutral-600 mb-2">{job.company} - {job.location}</p>
-      <p className="text-sm text-neutral-500 mb-4">
-        {job.contract.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-      </p>
-      <p className="mt-2 whitespace-pre-wrap text-neutral-700">{job.description}</p>
-      
-      {user && user.role === 'candidate' && (
-        <Link
-          to={`/jobs/${job.id}`}
-          className="btn btn-primary mt-6"
-          aria-label={`View details for ${job.title}`}
-        >
-          Check More About This Job
-        </Link>
-      )}
+      <Link
+        to={`/jobs/${job.id}`}
+        className="block card bg-white p-6 rounded-2xl shadow-md hover:shadow-lg hover:-translate-y-2 transition-all duration-300 border border-gray-100"
+        role="article"
+        aria-labelledby={`job-title-${job.id}`}
+      >
+        <h3 id={`job-title-${job.id}`} className="text-2xl font-semibold mb-3 text-blue-700">
+          💼 {job.title}
+        </h3>
+        <p className="text-neutral-600 mb-1">
+          🏢 <strong>{job.company}</strong>
+        </p>
+        <p className="text-neutral-600 mb-2">
+          📍 {job.location}
+        </p>
+        <p className="text-sm text-neutral-500 italic mb-4">
+          {job.contract.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+        </p>
+        <p className="mt-2 whitespace-pre-wrap text-neutral-700">
+          💬 {job.description}
+        </p>
+        {user && user.role === 'candidate' && (
+          <p className="mt-4 text-primary-600 font-medium">👀 Tap to view more!</p>
+        )}
+      </Link>
     </motion.div>
   );
 }

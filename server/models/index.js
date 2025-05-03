@@ -36,23 +36,23 @@ const Application = require('./Application')(sequelize);
 const Message = require('./message')(sequelize);
 const Notification = require('./notification')(sequelize);
 
-// Define relationships
-User.hasMany(Job, { foreignKey: 'recruiterId', as: 'jobs' });
-Job.belongsTo(User, { foreignKey: 'recruiterId', as: 'recruiter' });
-User.hasMany(Application, { foreignKey: 'candidateId', as: 'applications' });
+// Define relationships with minimal indexes on Users
+User.hasMany(Job, { foreignKey: 'recruiterId', as: 'jobs', constraints: false });
+Job.belongsTo(User, { foreignKey: 'recruiterId', as: 'recruiter', constraints: false });
+User.hasMany(Application, { foreignKey: 'candidateId', as: 'applications', constraints: false });
 Job.hasMany(Application, { foreignKey: 'jobId', as: 'applications' });
-Application.belongsTo(User, { foreignKey: 'candidateId', as: 'candidate' });
+Application.belongsTo(User, { foreignKey: 'candidateId', as: 'candidate', constraints: false });
 Application.belongsTo(Job, { foreignKey: 'jobId', as: 'job' });
 
 Application.hasMany(Message, { foreignKey: 'applicationId', as: 'messages' });
 Message.belongsTo(Application, { foreignKey: 'applicationId', as: 'application' });
-User.hasMany(Message, { foreignKey: 'senderId', as: 'sentMessages' });
-Message.belongsTo(User, { foreignKey: 'senderId', as: 'sender' });
-User.hasMany(Message, { foreignKey: 'recipientId', as: 'receivedMessages' });
-Message.belongsTo(User, { foreignKey: 'recipientId', as: 'recipient' });
+User.hasMany(Message, { foreignKey: 'senderId', as: 'sentMessages', constraints: false });
+Message.belongsTo(User, { foreignKey: 'senderId', as: 'sender', constraints: false });
+User.hasMany(Message, { foreignKey: 'recipientId', as: 'receivedMessages', constraints: false });
+Message.belongsTo(User, { foreignKey: 'recipientId', as: 'recipient', constraints: false });
 
-User.hasMany(Notification, { foreignKey: 'recipientId', as: 'notifications' });
-Notification.belongsTo(User, { foreignKey: 'recipientId', as: 'recipient' });
+User.hasMany(Notification, { foreignKey: 'recipientId', as: 'notifications', constraints: false });
+Notification.belongsTo(User, { foreignKey: 'recipientId', as: 'recipient', constraints: false });
 Application.hasMany(Notification, { foreignKey: 'applicationId', as: 'notifications' });
 Notification.belongsTo(Application, { foreignKey: 'applicationId', as: 'application' });
 Job.hasMany(Notification, { foreignKey: 'jobId', as: 'notifications' });

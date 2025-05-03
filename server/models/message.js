@@ -10,26 +10,14 @@ module.exports = (sequelize) => {
     applicationId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: {
-        model: 'Applications',
-        key: 'id',
-      },
     },
     senderId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: {
-        model: 'Users',
-        key: 'id',
-      },
     },
     recipientId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: {
-        model: 'Users',
-        key: 'id',
-      },
     },
     content: {
       type: DataTypes.TEXT,
@@ -37,14 +25,29 @@ module.exports = (sequelize) => {
     },
     sentAt: {
       type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
+      allowNull: true, // Matches database schema
     },
     isRead: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-    },
+      type: DataTypes.TINYINT, // Matches tinyint(1) in database
+      defaultValue: 0, // Matches database default
+      allowNull: false,
+    }
   }, {
-    timestamps: true,
+    tableName: 'Messages', // Verify exact table name
+    timestamps: true, // createdAt and updatedAt
+    createdAt: 'createdAt', // Ensure field names match
+    updatedAt: 'updatedAt',
+    // Add this if you need to handle the BOOLEAN conversion:
+    getterMethods: {
+      isRead() {
+        return this.getDataValue('isRead') === 1;
+      }
+    },
+    setterMethods: {
+      isRead(value) {
+        this.setDataValue('isRead', value ? 1 : 0);
+      }
+    }
   });
 
   return Message;

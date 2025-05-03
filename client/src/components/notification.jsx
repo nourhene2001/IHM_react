@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell, faCheckCircle, faTimesCircle, faEnvelope, faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
+import { 
+  faBell, 
+  faCheckCircle, 
+  faTimesCircle, 
+  faEnvelope, 
+  faExclamationCircle,
+  faCircleNotch,
+  faInfoCircle
+} from '@fortawesome/free-solid-svg-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext.jsx';
@@ -11,38 +19,77 @@ function Notifications() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const notificationRef = useRef(null);
 
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        if (!user?.token) {
-          setError('Please log in to view notifications. 😔');
-          return;
-        }
-  
-        const response = await axios.get('/api/notifications', {
-          headers: { Authorization: `Bearer ${user.token}` },
-        });
-  
-        // Ensure the response is an array before setting it
-        const notificationsData = Array.isArray(response.data) ? response.data : [];
-        setNotifications(notificationsData);
-        setUnreadCount(notificationsData.filter(n => !n.read).length);
-        setError('');
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
-        setError(
-          error.response?.status === 401
-            ? 'Unauthorized: Please log in again. 😿'
-            : 'Failed to fetch notifications. Please try again. 😢'
-        );
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      if (!user?.token) {
+        throw new Error('Please log in to view notifications');
       }
-    };
-  
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
+
+      const response = await axios.get('http://localhost:5000/api/jobs/notifications', {
+        headers: { 
+          Authorization: `Bearer ${user.token}`,
+          'Cache-Control': 'no-cache'
+        },
+        timeout: 10000
+      });
+
+      if (!response.data || !Array.isArray(response.data)) {
+        throw new Error('Invalid notifications data format');
+      }
+
+      // Process notifications to match expected format
+      const processedNotifications = response.data.map(notification => {
+        // Determine notification type based on message content
+        let type = 'general';
+        if (notification.message.includes('applied')) type = 'application';
+        if (notification.message.includes('accepted')) type = 'acceptance';
+        if (notification.message.includes('rejected')) type = 'rejection';
+        if (notification.message.includes('message')) type = 'message';
+
+        return {
+          id: notification.id,
+          type,
+          title: type === 'application' ? 'New Application' : 
+                type === 'acceptance' ? 'Application Accepted' :
+                type === 'rejection' ? 'Application Rejected' :
+                type === 'message' ? 'New Message' : 'Notification',
+          message: notification.message,
+          read: notification.isRead,
+          createdAt: notification.createdAt,
+          applicationId: notification.applicationId,
+          jobId: notification.jobId
+        };
+      });
+
+      setNotifications(processedNotifications);
+      setUnreadCount(processedNotifications.filter(n => !n.read).length);
+    } catch (error) {
+      console.error('Notification fetch error:', error);
+      setError(
+        error.response?.status === 401 ? 'Session expired. Please log in again.' :
+        error.response?.status === 404 ? 'No notifications found' :
+        error.message || 'Failed to load notifications. Please try again later.'
+      );
+      
+      setNotifications([]);
+      setUnreadCount(0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.token) {
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
   }, [user?.token]);
 
   useEffect(() => {
@@ -59,32 +106,56 @@ function Notifications() {
   const markAsRead = async (id) => {
     try {
       if (!user?.token) {
-        setError('Please log in to mark notifications as read. 😔');
-        return;
+        throw new Error('Authentication required');
       }
 
-      await axios.put(`/api/notifications/${id}/read`, {}, {
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
+      await axios.put(
+        `http://localhost:5000/api/jobs/notifications/${id}/read`, 
+        {},
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
 
-      setNotifications(
-        notifications.map(n =>
+      setNotifications(prev => 
+        prev.map(n => 
           n.id === id ? { ...n, read: true } : n
         )
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
-      console.error('Error marking notification as read:', error);
-      setError('Failed to mark notification as read. 😢');
+      console.error('Mark as read error:', error);
+      setError('Failed to update notification status');
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      if (!user?.token) {
+        throw new Error('Authentication required');
+      }
+
+      await axios.put(
+        'http://localhost:5000/api/jobs/notifications/read-all',
+        {},
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+
+      setNotifications(prev => 
+        prev.map(n => ({ ...n, read: true }))
+      );
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Mark all as read error:', error);
+      setError('Failed to mark all notifications as read');
     }
   };
 
   const getNotificationIcon = (type) => {
     switch (type) {
       case 'application': return faCheckCircle;
+      case 'acceptance': return faCheckCircle;
       case 'rejection': return faTimesCircle;
       case 'message': return faEnvelope;
-      default: return faBell;
+      default: return faInfoCircle;
     }
   };
 
@@ -120,10 +191,12 @@ function Notifications() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
             transition={{ duration: 0.2 }}
-            className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg z-10 overflow-hidden"
+            className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-lg z-50 overflow-hidden"
           >
             <div className="p-3 border-b border-neutral-200">
-              <h4 className="font-semibold text-neutral-900 tracking-tight">Notifications 🔔</h4>
+              <h4 className="font-semibold text-neutral-900 tracking-tight">
+                Notifications {unreadCount > 0 && `(${unreadCount} new)`}
+              </h4>
             </div>
 
             {error && (
@@ -134,9 +207,13 @@ function Notifications() {
             )}
 
             <div className="max-h-80 overflow-y-auto">
-              {notifications.length === 0 && !error ? (
+              {loading ? (
+                <div className="p-4 flex justify-center">
+                  <FontAwesomeIcon icon={faCircleNotch} spin className="text-blue-500 text-xl" />
+                </div>
+              ) : notifications.length === 0 ? (
                 <div className="p-4 text-center text-neutral-500 font-light tracking-wide">
-                  No notifications yet 📭
+                  {error ? 'No notifications available' : 'No notifications yet'}
                 </div>
               ) : (
                 notifications.map(notification => (
@@ -176,12 +253,15 @@ function Notifications() {
 
             <div className="p-2 border-t border-neutral-200">
               <button
-                className="w-full text-center text-sm text-green-600 hover:text-green-700 p-1 font-medium transition focus:outline-none focus:ring-2 focus:ring-green-500"
-                onClick={() => {
-                  // Mark all as read logic (optional, to be implemented)
-                }}
+                className={`w-full text-center text-sm p-1 font-medium transition focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                  unreadCount === 0 
+                    ? 'text-neutral-400 cursor-not-allowed' 
+                    : 'text-green-600 hover:text-green-700'
+                }`}
+                onClick={markAllAsRead}
+                disabled={unreadCount === 0}
               >
-                Mark all as read ✅
+                Mark all as read
               </button>
             </div>
           </motion.div>

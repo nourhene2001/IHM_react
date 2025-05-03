@@ -9,12 +9,24 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const sendNotification = async (to, subject, text) => {
+const sendNotification = async (to, subject, text, date = new Date()) => {
+  const formattedDate = date.toLocaleString('en-US', {
+    timeZone: 'UTC',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).replace(',', '');
+  const notificationText = `${text}\nDate: ${formattedDate}`;
+  
   await transporter.sendMail({
     from: process.env.EMAIL_USER,
     to,
     subject,
-    text,
+    text: notificationText,
   });
 };
 

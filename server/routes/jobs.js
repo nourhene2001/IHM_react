@@ -319,66 +319,75 @@ router.post('/applications/:id/message', auth, async (req, res) => {
   try {
     const application = await Application.findByPk(req.params.id, {
       include: [
-        { model: Job, as: 'job' },
-        { model: User, as: 'candidate', attributes: ['id', 'name'] },
+        { 
+          model: Job, 
+          as: 'job',
+          include: [
+            { model: User, as: 'recruiter', attributes: ['id', 'name', 'email'] }
+          ]
+        },
+        { 
+          model: User, 
+          as: 'candidate', 
+          attributes: ['id', 'name', 'email'] 
+        }
       ],
     });
+
     if (!application) {
       return res.status(404).json({ message: 'Application not found' });
     }
 
-    let senderId, recipientId, recipientName;
-    if (req.user.role === 'recruiter') {
-      if (application.job.recruiterId !== req.user.id) {
-        return res.status(403).json({ message: 'Access denied' });
-      }
-      senderId = req.user.id;
-      recipientId = application.candidateId;
-      recipientName = application.candidate.name;
-    } else if (req.user.role === 'candidate') {
-      if (application.candidateId !== req.user.id) {
-        return res.status(403).json({ message: 'Access denied' });
-      }
-      senderId = req.user.id;
-      recipientId = application.job.recruiterId;
-      const recruiter = await User.findByPk(recipientId, { attributes: ['name'] });
-      recipientName = recruiter.name;
-    } else {
+    // Verify permissions
+    if (req.user.role === 'recruiter' && application.job.recruiterId !== req.user.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    if (req.user.role === 'candidate' && application.candidateId !== req.user.id) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
     const { content } = req.body;
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
-      return res.status(400).json({ message: 'Message content is required and must be a non-empty string' });
+      return res.status(400).json({ message: 'Message content is required' });
     }
     if (content.length > 1000) {
       return res.status(400).json({ message: 'Message content cannot exceed 1000 characters' });
     }
 
+    // Determine recipient
+    const recipientId = req.user.role === 'recruiter' 
+      ? application.candidateId 
+      : application.job.recruiterId;
+
+    // Create message
     const message = await Message.create({
       applicationId: req.params.id,
-      senderId,
+      senderId: req.user.id,
       recipientId,
       content: content.trim(),
       sentAt: new Date(),
       isRead: false,
     });
 
+    // Create notification for recipient
     await Notification.create({
       recipientId,
       applicationId: application.id,
       jobId: application.job.id,
-      message: `You have received a new message regarding ${application.job.title} at ${application.job.company} from ${req.user.name}.`,
+      message: `New message about ${application.job.title} at ${application.job.company}`,
+      isRead: false,
+      createdAt: new Date()
     });
 
+    // Populate response with sender/recipient info
     const populatedMessage = await Message.findByPk(message.id, {
       include: [
-        { model: User, as: 'sender', attributes: ['name'] },
-        { model: User, as: 'recipient', attributes: ['name'] },
+        { model: User, as: 'sender', attributes: ['id', 'name'] },
+        { model: User, as: 'recipient', attributes: ['id', 'name'] },
       ],
     });
 
-    res.status(201).json({ message: `Message sent to ${recipientName}`, data: populatedMessage });
+    res.status(201).json(populatedMessage);
   } catch (err) {
     console.error('Error sending message:', err.message, err.stack);
     res.status(500).json({ message: 'Server error', error: err.message });

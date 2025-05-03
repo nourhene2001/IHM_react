@@ -10,18 +10,10 @@ module.exports = (sequelize) => {
     jobId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: {
-        model: 'Jobs',
-        key: 'id',
-      },
     },
     candidateId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: {
-        model: 'Users',
-        key: 'id',
-      },
     },
     cv: {
       type: DataTypes.TEXT,
@@ -37,15 +29,33 @@ module.exports = (sequelize) => {
     },
     note: {
       type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    files: {
+      type: DataTypes.JSON,
+      allowNull: true,
     },
     status: {
       type: DataTypes.ENUM('pending', 'accepted', 'rejected'),
       defaultValue: 'pending',
+      allowNull: false,
     },
     appliedAt: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
+      allowNull: false,
     },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+  }, {
+    tableName: 'Applications',
+    timestamps: true,
   });
 
   return Application;

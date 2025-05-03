@@ -10,42 +10,35 @@ module.exports = (sequelize) => {
     recipientId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: {
-        model: 'Users',
-        key: 'id',
-      },
     },
     applicationId: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      references: {
-        model: 'Applications',
-        key: 'id',
-      },
     },
     jobId: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      references: {
-        model: 'Jobs',
-        key: 'id',
-      },
     },
     message: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255), // Explicit length to match varchar(255)
       allowNull: false,
     },
     isRead: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+      allowNull: false,
+      field: 'isRead' // Explicit field mapping if needed
     },
     createdAt: {
       type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
+      allowNull: false, // Changed to false to enforce a value
+      defaultValue: DataTypes.NOW, // Set default to current timestamp
+      field: 'createdAt' // Explicit field mapping
+    }
   }, {
-    timestamps: true,
-    updatedAt: false, // We don't need updatedAt for notifications
+    tableName: 'Notifications', // Ensure this exactly matches your table name
+    timestamps: false, // Disable automatic timestamps since we're managing createdAt manually
+    underscored: false // Set to true if your database uses snake_case
   });
 
   return Notification;

@@ -38,17 +38,22 @@ module.exports = (sequelize) => {
     recruiterId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: {
-        model: 'Users',
-        key: 'id',
-      },
     },
     isApproved: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   }, {
-    timestamps: true, // Ensures createdAt and updatedAt are managed
+    tableName: 'Jobs',
+    timestamps: true,
   });
 
   return Job;
